@@ -19,9 +19,17 @@ app.use(cookieParser()); // It is use for cookie parser
 
 
 
+//import router
+import userRouter from "./routes/user.routes.js"
 
 
 
+//router declaration
+app.use("/api/v1/users", userRouter)
+
+
+//example: 
+// http://localhost:8000/api/v1/users/register 
 
 
 
