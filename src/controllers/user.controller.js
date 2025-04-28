@@ -252,7 +252,109 @@ try {
    }
 })
 
+const changeCurrentPassword = asyncHandler(async(req, res)=>{
+     const {oldPassword, newPassword} = req.body
+     
+     const user = await User.findById(req.user?._id)
+
+     if (!user) {
+        throw new ApiError(404,"user not found")
+     }
+
+     const isPasswordcorrect = user.verifyPassword(oldPassword)
+
+     if (!isPasswordcorrect) {
+        throw new ApiError(404,"invalid oldPassword password")
+     }
+     user.password = newPassword
+     await user.save({validateBeforeSave:false})
+
+     return res
+     .status(200)
+     .json(200, {}, "Password changed successfully")
+     
+})
+
+const getCurrentUser = asyncHandler(async(req, res)=>{
+    return res
+    .status(200)
+    .json(200, req.user, "current user fetched successfully")
+})
+
+const updateAccountDetails = asyncHandler (async (req, res)=>{
+    const {fullName, email} = req.body
+
+    if (!(fullName || email)) {
+        throw new ApiError(400, "All fields are required")
+    }
+
+    const user = User.findByIdAndUpdate(req.user?._id,
+        {
+        $set:
+        {
+            fullName: fullName,
+            email: email
+        },
+        
+        },
+        {
+             new: true
+        }
+    ).select("-password")
 
 
 
-export {registerUser, loginUser, logOut, refreshAccessToken}
+    return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Account details updated successfully"))
+})
+
+const updateAvatar = asyncHandler(async (req, res)=>{
+     const avatarLocalPath = req.file?.path
+
+     if(!avatarLocalPath){
+        throw new ApiError(404, "Avatar file is missing")
+     }
+
+     const avatar = await uploadCloudinary(avatarLocalPath)
+
+     if(!avatar.url){
+         throw new ApiError(404, "Error while uploading on avatar")
+     }
+
+    
+     const user = await User.findByIdAndUpdate(req.user?._id,
+     {
+        $set: {
+            avatar:avatar.url
+        }
+     },
+     {
+        new: true
+     }
+    ).select("-password")
+
+     return res
+     .status(200)
+     .json(new ApiResponse (200, user, "avatar update succesfully"))
+
+})
+
+
+
+
+
+
+
+
+
+export {
+    registerUser, 
+    loginUser, 
+    logOut, 
+    refreshAccessToken, 
+    changeCurrentPassword, 
+    getCurrentUser, 
+    updateAccountDetails
+
+}
